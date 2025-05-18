@@ -3,7 +3,8 @@ import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Separator } from '@/components/ui/separator';
-import { Mail } from 'lucide-react';
+import { Mail, Music, Headphones, Mic2, Speaker } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 const About = () => {
   const faqs = [
@@ -34,66 +35,92 @@ const About = () => {
       <Navbar />
       <main className="flex-grow pt-28 pb-16 bg-gradient-to-b from-secondary/30 to-background">
         <div className="container px-4 md:px-6">
-          <div className="mb-8 animate-slide-up max-w-3xl mx-auto">
-            <h1 className="text-3xl font-bold tracking-tight mb-3 text-center">About SoundMatch AI</h1>
-            <p className="text-lg text-muted-foreground mb-6 text-center">
+          <div className="mb-12 animate-slide-up max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center justify-center p-2 bg-secondary/20 rounded-full mb-4">
+              <Headphones className="h-8 w-8 text-primary" />
+            </div>
+            <h1 className="text-4xl font-bold tracking-tight mb-3">About SoundMatch AI</h1>
+            <p className="text-xl text-muted-foreground">
               Finding copyright-free alternatives to your favorite music
             </p>
-            <Separator className="my-6" />
+            <Separator className="my-8 max-w-md mx-auto" />
           </div>
           
           <section className="max-w-3xl mx-auto mb-16 animate-slide-up">
-            <div className="bg-card rounded-xl border shadow-sm p-6">
-              <p className="text-lg text-muted-foreground mb-6">
-                SoundMatch AI is an innovative platform that helps creators find copyright-free music that sounds similar to their favorite tracks. Our powerful AI analyzes the audio characteristics of your reference song and searches through extensive libraries of free-to-use music to find the closest matches.
-              </p>
-              <p className="text-lg text-muted-foreground">
-                Whether you're a content creator, streamer, marketer, or game developer, our technology helps you find the perfect soundtrack for your projects while avoiding copyright issues. No more worrying about DMCA strikes or licensing fees – just great music that matches your creative vision.
-              </p>
-            </div>
+            <Card className="border-none shadow-lg">
+              <CardContent className="p-8">
+                <div className="flex items-start gap-6 mb-6">
+                  <div className="mt-1">
+                    <Music className="h-8 w-8 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-lg text-muted-foreground mb-6">
+                      SoundMatch AI is an innovative platform that helps creators find copyright-free music that sounds similar to their favorite tracks. Our powerful AI analyzes the audio characteristics of your reference song and searches through extensive libraries of free-to-use music to find the closest matches.
+                    </p>
+                    <p className="text-lg text-muted-foreground">
+                      Whether you're a content creator, streamer, marketer, or game developer, our technology helps you find the perfect soundtrack for your projects while avoiding copyright issues. No more worrying about DMCA strikes or licensing fees – just great music that matches your creative vision.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </section>
           
           <section className="max-w-3xl mx-auto mb-16">
-            <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">How It Works</h2>
-            <div className="bg-card rounded-xl border shadow-sm p-6">
-              <p className="text-lg mb-6">
-                SoundMatch AI uses advanced audio processing technologies to find similar music:
-              </p>
-              <ol className="space-y-4">
-                <li className="flex gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium">1</div>
-                  <div>
-                    <p className="font-medium">Input Processing</p>
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center p-2 bg-secondary/20 rounded-full mb-4">
+                <Mic2 className="h-6 w-6 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight">How It Works</h2>
+            </div>
+            
+            <Card className="border-none shadow-lg">
+              <CardContent className="p-8">
+                <p className="text-lg mb-8 text-center">
+                  SoundMatch AI uses advanced audio processing technologies to find similar music:
+                </p>
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="bg-secondary/10 rounded-xl p-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium">1</div>
+                      <h3 className="text-xl font-semibold">Input Processing</h3>
+                    </div>
                     <p className="text-muted-foreground">We accept MP3 uploads or extract audio from Spotify and YouTube links.</p>
                   </div>
-                </li>
-                <li className="flex gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium">2</div>
-                  <div>
-                    <p className="font-medium">Feature Extraction</p>
+                  <div className="bg-secondary/10 rounded-xl p-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium">2</div>
+                      <h3 className="text-xl font-semibold">Feature Extraction</h3>
+                    </div>
                     <p className="text-muted-foreground">Our AI analyzes tempo, rhythm, melody, timbre, and energy profiles using machine learning models.</p>
                   </div>
-                </li>
-                <li className="flex gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium">3</div>
-                  <div>
-                    <p className="font-medium">Similarity Search</p>
+                  <div className="bg-secondary/10 rounded-xl p-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium">3</div>
+                      <h3 className="text-xl font-semibold">Similarity Search</h3>
+                    </div>
                     <p className="text-muted-foreground">We compare against our database of copyright-free music to find the closest matches.</p>
                   </div>
-                </li>
-                <li className="flex gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium">4</div>
-                  <div>
-                    <p className="font-medium">Results Delivery</p>
+                  <div className="bg-secondary/10 rounded-xl p-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium">4</div>
+                      <h3 className="text-xl font-semibold">Results Delivery</h3>
+                    </div>
                     <p className="text-muted-foreground">You receive a curated list of similar tracks with previews and download options.</p>
                   </div>
-                </li>
-              </ol>
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           </section>
           
           <section className="max-w-3xl mx-auto mb-16">
-            <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">Frequently Asked Questions</h2>
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center p-2 bg-secondary/20 rounded-full mb-4">
+                <Speaker className="h-6 w-6 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight">Frequently Asked Questions</h2>
+            </div>
+            
             <div className="space-y-4">
               {faqs.map((faq, index) => (
                 <div key={index} className="bg-card rounded-xl border shadow-sm overflow-hidden">
@@ -127,21 +154,29 @@ const About = () => {
           </section>
           
           <section className="max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">Get In Touch</h2>
-            <div className="bg-card rounded-xl border shadow-sm p-6">
-              <div className="text-center py-6">
-                <p className="text-lg text-muted-foreground mb-6">
-                  Have questions, feedback, or need assistance with SoundMatch AI? We'd love to hear from you!
-                </p>
-                <a 
-                  href="mailto:hello@soundmatch.app" 
-                  className="inline-flex items-center text-primary text-xl font-medium hover:underline"
-                >
-                  <Mail className="mr-2 h-6 w-6" />
-                  hello@soundmatch.app
-                </a>
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center p-2 bg-secondary/20 rounded-full mb-4">
+                <Mail className="h-6 w-6 text-primary" />
               </div>
+              <h2 className="text-2xl font-bold tracking-tight">Get In Touch</h2>
             </div>
+            
+            <Card className="border-none shadow-lg">
+              <CardContent className="p-8">
+                <div className="text-center py-6">
+                  <p className="text-lg text-muted-foreground mb-6">
+                    Have questions, feedback, or need assistance with SoundMatch AI? We'd love to hear from you!
+                  </p>
+                  <a 
+                    href="mailto:hello@soundmatch.app" 
+                    className="inline-flex items-center text-primary text-xl font-medium hover:underline p-4 bg-secondary/20 rounded-full"
+                  >
+                    <Mail className="mr-2 h-6 w-6" />
+                    hello@soundmatch.app
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
           </section>
         </div>
       </main>
