@@ -3,13 +3,13 @@ from typing import Dict, Any, List, Optional
 import requests
 from app.core.config import settings
 from app.core.logging import logger
-from app.services.metadata.musicbrainz import musicbrainz_client
-from app.services.metadata.jamendo import jamendo_service
-from app.services.metadata.musixmatch import musixmatch_service
+from app.services.metadata.musicbrainz import musicbrainz_client, MusicBrainzClient
+from app.services.metadata.jamendo import jamendo_service, JamendoService
+from app.services.metadata.musixmatch import musixmatch_service, MusixmatchService
 from app.services.recognition.shazam import zyla_shazam_client
-from app.services.ai.gemini_service import gemini_service
-from app.services.metadata.discogs_service import discogs_service
-from app.services.metadata.wikipedia_service import wikipedia_service
+from app.services.ai.gemini_service import gemini_service, GeminiService
+from app.services.metadata.discogs_service import discogs_service, DiscogsService
+from app.services.metadata.wikipedia_service import wikipedia_service, WikipediaService
 from app.core.exceptions import RecognitionAPIError, AIServiceError, MusixmatchAPIError, MetadataAPIError
 import tempfile
 import os
