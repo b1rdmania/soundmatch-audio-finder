@@ -1,0 +1,113 @@
+Starting Container
+2025-04-22T16:25:38.363944693Z [INFO] Discogs client initialized successfully using Personal Access Token. context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:25:38.281069"
+INFO:app.services.audio_identification.acoustid_service:AcoustIDClient initialized with API key: ebv...BF8
+2025-04-22T16:25:38.363999416Z [INFO] Gemini Service Initialized context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:25:38.348376"
+INFO:soundmatch:Gemini Service Initialized
+2025-04-22T16:25:38.382855262Z [INFO] FastAPI application starting up... context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:25:38.380121"
+INFO:soundmatch:FastAPI application starting up...
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2025-04-22T16:30:08.854521462Z [INFO] Processing uploaded file: 14 A Horse with No Name.mp3 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:01.389392"
+INFO:soundmatch:Processing uploaded file: 14 A Horse with No Name.mp3
+2025-04-22T16:30:08.854612969Z [INFO] File content type: audio/mpeg context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:01.390427"
+INFO:soundmatch:File content type: audio/mpeg
+2025-04-22T16:30:08.854683577Z [INFO] Content sample (first 50 bytes): b'ID3\x03\x00\x00\x00\x01@kTIT2\x00\x00\x00\x15\x00\x00\x00A Horse with No NameTPE1\x00\x00\x00\x08\x00' context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:01.406550"
+2025-04-22T16:30:08.854693803Z [INFO] Using file extension: .mp3 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:01.390558"
+INFO:soundmatch:Content sample (first 50 bytes): b'ID3\x03\x00\x00\x00\x01@kTIT2\x00\x00\x00\x15\x00\x00\x00A Horse with No NameTPE1\x00\x00\x00\x08\x00'
+INFO:soundmatch:Using file extension: .mp3
+2025-04-22T16:30:08.854767935Z [INFO] Successfully wrote 10181230 bytes to temporary file context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:01.433474"
+2025-04-22T16:30:08.854779411Z [INFO] Created temporary file at: /tmp/tmp3gy5iqmj.mp3 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:01.391075"
+INFO:soundmatch:Successfully wrote 10181230 bytes to temporary file
+INFO:soundmatch:Created temporary file at: /tmp/tmp3gy5iqmj.mp3
+2025-04-22T16:30:08.854824046Z [INFO] Temporary file permissions: 600 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:01.433792"
+INFO:soundmatch:Temporary file permissions: 600
+2025-04-22T16:30:08.854863920Z [INFO] Reading uploaded file content context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:01.391194"
+2025-04-22T16:30:08.854896023Z [INFO] Starting AcoustID recognition for /tmp/tmp3gy5iqmj.mp3... context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:01.433915"
+INFO:soundmatch:Reading uploaded file content
+INFO:soundmatch:Starting AcoustID recognition for /tmp/tmp3gy5iqmj.mp3...
+2025-04-22T16:30:08.854941173Z [INFO] Read 10181230 bytes from uploaded file context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:01.406280"
+INFO:soundmatch:Read 10181230 bytes from uploaded file
+2025-04-22T16:30:08.854974527Z [ERRO] Unexpected error during AcoustID processing: name 'acoustid_client' is not defined context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} exception="Traceback (most recent call last):\n  File \"/app/app/api/v1/endpoints/music.py\", line 292, in process_file\n    acoustid_result = await acoustid_client.lookup_fingerprint(\n                            ^^^^^^^^^^^^^^^\nNameError: name 'acoustid_client' is not defined" timestamp="2025-04-22T16:30:01.434540"
+ERROR:soundmatch:Unexpected error during AcoustID processing: name 'acoustid_client' is not defined
+Traceback (most recent call last):
+  File "/app/app/api/v1/endpoints/music.py", line 292, in process_file
+    acoustid_result = await acoustid_client.lookup_fingerprint(
+                            ^^^^^^^^^^^^^^^
+NameError: name 'acoustid_client' is not defined
+2025-04-22T16:30:08.855370976Z [ERRO] Exception type: NameError context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:01.437097"
+ERROR:soundmatch:Exception type: NameError
+INFO:soundmatch:Content sample (first 50 bytes): b'ID3\x03\x00\x00\x00\x01@kTIT2\x00\x00\x00\x15\x00\x00\x00A Horse with No NameTPE1\x00\x00\x00\x08\x00'
+2025-04-22T16:30:08.855456775Z [INFO] Successfully wrote 10181230 bytes to temporary file context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:03.431352"
+2025-04-22T16:30:08.855461142Z [INFO] Cleaned up temporary file: /tmp/tmp3gy5iqmj.mp3 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:01.454594"
+INFO:soundmatch:Successfully wrote 10181230 bytes to temporary file
+INFO:soundmatch:Cleaned up temporary file: /tmp/tmp3gy5iqmj.mp3
+2025-04-22T16:30:08.855511435Z [INFO] Temporary file permissions: 600 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:03.431669"
+INFO:soundmatch:Temporary file permissions: 600
+2025-04-22T16:30:08.855540613Z [WARN] Recognition failed: No track recognized. Returning 404 error. context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:01.455022"
+2025-04-22T16:30:08.855560629Z [INFO] Starting AcoustID recognition for /tmp/tmpz43ndhwc.mp3... context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:03.431744"
+WARNING:soundmatch:Recognition failed: No track recognized. Returning 404 error.
+INFO:soundmatch:Starting AcoustID recognition for /tmp/tmpz43ndhwc.mp3...
+INFO:     100.64.0.2:15716 - "POST /api/v1/music/process-file HTTP/1.1" 404 Not Found
+2025-04-22T16:30:08.855631206Z [ERRO] Unexpected error during AcoustID processing: name 'acoustid_client' is not defined context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} exception="Traceback (most recent call last):\n  File \"/app/app/api/v1/endpoints/music.py\", line 292, in process_file\n    acoustid_result = await acoustid_client.lookup_fingerprint(\n                            ^^^^^^^^^^^^^^^\nNameError: name 'acoustid_client' is not defined" timestamp="2025-04-22T16:30:03.431848"
+2025-04-22T16:30:08.855635830Z [INFO] Processing uploaded file: 14 A Horse with No Name.mp3 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:03.385873"
+ERROR:soundmatch:Unexpected error during AcoustID processing: name 'acoustid_client' is not defined
+INFO:soundmatch:Processing uploaded file: 14 A Horse with No Name.mp3
+  File "/app/app/api/v1/endpoints/music.py", line 292, in process_file
+Traceback (most recent call last):
+    acoustid_result = await acoustid_client.lookup_fingerprint(
+2025-04-22T16:30:08.855714308Z [INFO] File content type: audio/mpeg context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:03.386094"
+                            ^^^^^^^^^^^^^^^
+INFO:soundmatch:File content type: audio/mpeg
+NameError: name 'acoustid_client' is not defined
+2025-04-22T16:30:08.855803555Z [INFO] Using file extension: .mp3 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:03.386147"
+2025-04-22T16:30:08.855810245Z [ERRO] Exception type: NameError context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:03.433143"
+ERROR:soundmatch:Exception type: NameError
+INFO:soundmatch:Using file extension: .mp3
+2025-04-22T16:30:08.855893098Z [INFO] Cleaned up temporary file: /tmp/tmpz43ndhwc.mp3 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:03.446493"
+INFO:soundmatch:Cleaned up temporary file: /tmp/tmpz43ndhwc.mp3
+2025-04-22T16:30:08.855922291Z [INFO] Created temporary file at: /tmp/tmpz43ndhwc.mp3 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:03.386635"
+2025-04-22T16:30:08.855952815Z [WARN] Recognition failed: No track recognized. Returning 404 error. context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:03.446908"
+INFO:soundmatch:Created temporary file at: /tmp/tmpz43ndhwc.mp3
+2025-04-22T16:30:08.855984890Z [INFO] Reading uploaded file content context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:03.386718"
+WARNING:soundmatch:Recognition failed: No track recognized. Returning 404 error.
+INFO:soundmatch:Reading uploaded file content
+INFO:     100.64.0.2:15716 - "POST /api/v1/music/process-file HTTP/1.1" 404 Not Found
+2025-04-22T16:30:08.856041104Z [INFO] Read 10181230 bytes from uploaded file context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:03.405843"
+INFO:soundmatch:Read 10181230 bytes from uploaded file
+2025-04-22T16:30:08.856106671Z [INFO] Content sample (first 50 bytes): b'ID3\x03\x00\x00\x00\x01@kTIT2\x00\x00\x00\x15\x00\x00\x00A Horse with No NameTPE1\x00\x00\x00\x08\x00' context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:03.406074"
+2025-04-22T16:30:12.952611693Z [INFO] Processing uploaded file: LOVE.mp3 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:12.950706"
+INFO:soundmatch:Processing uploaded file: LOVE.mp3
+2025-04-22T16:30:12.952718479Z [INFO] File content type: audio/mpeg context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:12.951092"
+INFO:soundmatch:File content type: audio/mpeg
+2025-04-22T16:30:12.952802314Z [INFO] Using file extension: .mp3 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:12.951170"
+INFO:soundmatch:Using file extension: .mp3
+2025-04-22T16:30:12.952890763Z [INFO] Created temporary file at: /tmp/tmpjeaodlha.mp3 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:12.951517"
+INFO:soundmatch:Created temporary file at: /tmp/tmpjeaodlha.mp3
+2025-04-22T16:30:12.953045904Z [INFO] Reading uploaded file content context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:12.951617"
+INFO:soundmatch:Reading uploaded file content
+2025-04-22T16:30:12.962551444Z [INFO] Read 5239637 bytes from uploaded file context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:12.957395"
+INFO:soundmatch:Read 5239637 bytes from uploaded file
+2025-04-22T16:30:12.962644896Z [INFO] Content sample (first 50 bytes): b'ID3\x02\x00\x00\x007l<TT2\x00\x00\x0e\x0001 LOVE SONG\x00TP1\x00\x00\x0b\x00LANI HALL\x00TAL' context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:12.957555"
+INFO:soundmatch:Content sample (first 50 bytes): b'ID3\x02\x00\x00\x007l<TT2\x00\x00\x0e\x0001 LOVE SONG\x00TP1\x00\x00\x0b\x00LANI HALL\x00TAL'
+2025-04-22T16:30:12.977930127Z [INFO] Successfully wrote 5239637 bytes to temporary file context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:12.971254"
+INFO:soundmatch:Successfully wrote 5239637 bytes to temporary file
+2025-04-22T16:30:12.978047532Z [INFO] Temporary file permissions: 600 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:12.971479"
+INFO:soundmatch:Temporary file permissions: 600
+2025-04-22T16:30:12.978151839Z [INFO] Starting AcoustID recognition for /tmp/tmpjeaodlha.mp3... context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:12.971549"
+INFO:soundmatch:Starting AcoustID recognition for /tmp/tmpjeaodlha.mp3...
+2025-04-22T16:30:12.978330798Z [ERRO] Unexpected error during AcoustID processing: name 'acoustid_client' is not defined context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} exception="Traceback (most recent call last):\n  File \"/app/app/api/v1/endpoints/music.py\", line 292, in process_file\n    acoustid_result = await acoustid_client.lookup_fingerprint(\n                            ^^^^^^^^^^^^^^^\nNameError: name 'acoustid_client' is not defined" timestamp="2025-04-22T16:30:12.971636"
+ERROR:soundmatch:Unexpected error during AcoustID processing: name 'acoustid_client' is not defined
+Traceback (most recent call last):
+  File "/app/app/api/v1/endpoints/music.py", line 292, in process_file
+    acoustid_result = await acoustid_client.lookup_fingerprint(
+                            ^^^^^^^^^^^^^^^
+NameError: name 'acoustid_client' is not defined
+2025-04-22T16:30:12.978884438Z [ERRO] Exception type: NameError context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:12.973010"
+ERROR:soundmatch:Exception type: NameError
+2025-04-22T16:30:12.985775997Z [INFO] Cleaned up temporary file: /tmp/tmpjeaodlha.mp3 context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:12.981058"
+INFO:soundmatch:Cleaned up temporary file: /tmp/tmpjeaodlha.mp3
+2025-04-22T16:30:12.985853350Z [WARN] Recognition failed: No track recognized. Returning 404 error. context={"duration_ms":null,"endpoint":null,"request_id":null,"user_id":null} timestamp="2025-04-22T16:30:12.981263"
+WARNING:soundmatch:Recognition failed: No track recognized. Returning 404 error.
+INFO:     100.64.0.2:60314 - "POST /api/v1/music/process-file HTTP/1.1" 404 Not Found

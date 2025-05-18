@@ -11,8 +11,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 ACOUSTID_API_URL = "https://api.acoustid.org/v2/lookup"
-# Store API key in environment variable for security
-ACOUSTID_CLIENT_API_KEY = os.getenv("ACOUSTID_APP_API_KEY", "ebvANUXBF8") # Use provided key as default
+ACOUSTID_CLIENT_API_KEY = os.getenv("ACOUSTID_APP_API_KEY")
 
 class AcoustIDError(Exception):
     """Custom exception for AcoustID client errors."""
@@ -23,7 +22,7 @@ class AcoustIDClient:
 
     def __init__(self, api_key: str = ACOUSTID_CLIENT_API_KEY):
         if not api_key:
-            raise ValueError("AcoustID Application API Key is required.")
+            raise ValueError("AcoustID Application API Key is required. Set ACOUSTID_APP_API_KEY environment variable.")
         self.api_key = api_key
         self.base_params = {"client": self.api_key, "format": "json"}
         logger.info(f"AcoustIDClient initialized with API key: {self.api_key[:3]}...{self.api_key[-3:]}")
@@ -120,7 +119,7 @@ class AcoustIDClient:
     async def lookup_by_fingerprint(self, fingerprint: str, duration: float, metadata: Optional[list[str]] = None) -> Optional[Dict[str, Any]]:
         """Looks up a fingerprint via AcoustID API using pre-calculated fingerprint and duration."""
         logger.info(f"Starting lookup for pre-calculated fingerprint, duration: {duration}")
-        
+
         params = {
             **self.base_params,
             "duration": str(int(duration)), # Duration must be an integer string
@@ -177,8 +176,13 @@ class AcoustIDClient:
                 logger.error(f"Exception traceback: {sys.exc_info()[2]}")
                 raise AcoustIDError(f"An unexpected AcoustID lookup error: {e}")
 
-# Create the client
-acoustid_client = AcoustIDClient()
+# Create the client (only if API key is available)
+acoustid_client = None
+if ACOUSTID_CLIENT_API_KEY:
+    try:
+        acoustid_client = AcoustIDClient()
+    except ValueError as e:
+        logger.warning(f"Could not initialize global AcoustIDClient: {e}")
 
 # Example Usage (for testing)
 async def main():

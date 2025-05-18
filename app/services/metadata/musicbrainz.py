@@ -23,6 +23,7 @@ class MusicBrainzClient:
         """Internal async wrapper for musicbrainzngs search."""
         try:
             # Use to_thread as musicbrainzngs is synchronous
+            logger.debug(f"Querying MusicBrainz with: recording:\"{title}\" AND artist:\"{artist}\"")
             result = await asyncio.to_thread(
                 musicbrainzngs.search_recordings,
                 query=f'recording:"{title}" AND artist:"{artist}"', 
@@ -30,13 +31,18 @@ class MusicBrainzClient:
                 strict=True 
             )
             return result
+        except (musicbrainzngs.UsageError, musicbrainzngs.ResponseError) as exc:
+            logger.error(f"MusicBrainz usage or response parsing error: {exc}", exc_info=True)
+            logger.error(f"This often indicates an issue with the data received from MusicBrainz or how it's being parsed (e.g., unexpected attributes like 'type-id' in aliases).")
+            # Potentially log the raw query or parts of the response if safe and useful
+            # For now, just returning None as per existing logic
+            return None
         except musicbrainzngs.WebServiceError as exc:
-            logger.error(f"MusicBrainz API error during recording search: {exc}")
-            # Don't raise here, let caller handle None response
+            logger.error(f"MusicBrainz API WebServiceError during recording search: {exc}", exc_info=True)
+            # This could be network issues, authentication, rate limiting, etc.
             return None
         except Exception as e:
             logger.error(f"Unexpected error during MusicBrainz search: {e}", exc_info=True)
-            # Don't raise here
             return None
 
     async def get_musicbrainz_data(self, title: str, artist: str) -> Optional[Dict[str, Any]]:

@@ -40,9 +40,9 @@ const WhitePaper: React.FC = () => { // Keep component name as WhitePaper
               <li><strong>AI Analysis & Keywords:</strong> Google Gemini (gemini-1.5-flash)</li>
               <li><strong>Royalty-Free Music Search:</strong> Jamendo API</li>
               <li><strong>Deployment:</strong> Vercel (Frontend), Railway (Backend)</li>
-            </ul>
+              </ul>
           </section>
-          
+
           {/* Development Progress */}
           <section className="mb-8">
              <h2 className="text-2xl font-semibold mb-3">Development Progress So Far</h2>
@@ -59,7 +59,7 @@ const WhitePaper: React.FC = () => { // Keep component name as WhitePaper
                         <li>Integrated Gemini client for AI analysis, refining the prompt to synthesize data from all sources and use internal knowledge.</li>
                         <li>Integrated Jamendo client for royalty-free search based on Gemini keywords.</li>
                         <li>Configured CORS, environment variables, logging.</li>
-                    </ul>
+                </ul>
                 </div>
                 <div>
                     <h3 className="font-semibold text-foreground mb-1">Frontend (React)</h3>
@@ -90,9 +90,9 @@ const WhitePaper: React.FC = () => { // Keep component name as WhitePaper
                         <li>Improved frontend layout and data presentation.</li>
                     </ul>
                 </div>
-             </div>
+            </div>
           </section>
-          
+
            {/* Next Steps */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-3">Next Steps / Known Limitations</h2>

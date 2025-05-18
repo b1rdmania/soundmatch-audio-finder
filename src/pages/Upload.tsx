@@ -20,7 +20,7 @@ const Upload = () => {
           <div className="max-w-3xl mx-auto text-center mb-10 animate-slide-up">
             <h1 className="text-3xl font-bold tracking-tight mb-3">Find Your Perfect Sound</h1>
             <p className="text-muted-foreground text-lg">
-              Upload a song or paste a link to discover similar copyright-free music.
+              Upload a song or paste a YouTube link to discover similar copyright-free music.
             </p>
           </div>
           

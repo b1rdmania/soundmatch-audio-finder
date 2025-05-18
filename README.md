@@ -1,8 +1,10 @@
 # SoundMatch AI - Find Similar Copyright-Free Music
 
-**Hackathon Project - Seeking Partners!**
+**Version 1.0.0 - MVP Release**
 
-This project is being developed for a hackathon and we are actively looking for enthusiastic partners to join the team! If you're interested in AI, music technology, web development (React/FastAPI), or data services like MusicBrainz and Jamendo, please reach out!
+This project helps content creators, developers, and music enthusiasts discover copyright-free music similar to a provided track or audio file. Initially developed as a hackathon project, this v1.0.0 marks the first stable MVP release.
+
+We welcome contributions! If you're interested in AI, music technology, web development (React/FastAPI), or data services, please check out our "Next Steps" or open an issue with your ideas.
 
 ## Project Goal
 
@@ -19,8 +21,14 @@ The core idea is to leverage metadata analysis (using MusicBrainz) and similarit
 
 - **Frontend:** React, Vite, TypeScript, Tailwind CSS, shadcn-ui
 - **Backend:** Python, FastAPI
-- **Metadata:** MusicBrainz API
-- **Royalty-Free Music Search:** Jamendo API
+- **Audio Fingerprinting:** AcoustID (with Chromaprint)
+- **Metadata APIs:**
+    - MusicBrainz (`musicbrainzngs` library)
+    - Discogs API
+    - (Musixmatch API was also integrated for lyrics/metadata enrichment)
+- **Royalty-Free Music Source:** Jamendo API
+- **AI Content Analysis/Tagging:** Google Gemini Pro (via `google-generativeai` library)
+- **Audio Input Sources:** MP3 Upload, YouTube Link (via `google-api-python-client` for metadata/processing)
 - **Deployment:** Vercel (Frontend), Railway (Backend)
 
 ## Development Progress So Far
@@ -31,10 +39,10 @@ We have made significant progress in building the core infrastructure and functi
     - Set up FastAPI application structure.
     - Implemented API endpoints for:
         - `/search`: Takes title/artist, fetches metadata from Musixmatch (with fallback search), MusicBrainz, Discogs, and Wikipedia. Analyzes combined data with Gemini to generate description/keywords, then searches Jamendo.
-        - `/process-file`: Accepts an MP3 upload, recognizes it using Shazam, fetches metadata from Musixmatch/MusicBrainz/Discogs/Wikipedia, analyzes with Gemini, and searches Jamendo.
+        - `/process-file`: Accepts an MP3 upload, recognizes it using AcoustID (with ID3 tag fallback), fetches metadata from Musixmatch/MusicBrainz/Discogs/Wikipedia, analyzes with Gemini, and searches Jamendo.
         - *`/process-link`: (Future Feature) Accepts a music URL.*
     - Integrated Musixmatch client with fallback logic (`matcher.track.get` -> `track.search`).
-    - Integrated Shazam client (using a third-party wrapper) for audio recognition.
+    - Integrated AcoustID client (with Chromaprint's fpcalc) for audio fingerprinting and recognition.
     - Integrated MusicBrainz client to fetch recording MBID and tags.
     - Integrated Discogs client to fetch release year, styles, genres, and **cover art URL**.
     - Integrated **Wikipedia client** to fetch introductory summaries.
@@ -96,7 +104,14 @@ To run this project locally:
     - Create a Python virtual environment: `python -m venv .venv`
     - Activate the virtual environment: `source .venv/bin/activate` (or `.\venv\Scripts\activate` on Windows)
     - Install backend dependencies: `pip install -r requirements.txt`
-    - Create a `.env` file based on `.env.example` and add your API keys (Jamendo, potentially others).
+    - Install Chromaprint for audio fingerprinting: 
+      - macOS: `brew install chromaprint`
+      - Ubuntu/Debian: `apt-get install libchromaprint-tools`
+      - Windows: Download from [AcoustID website](https://acoustid.org/chromaprint)
+    - Create a `.env` file based on `.env.example` and add your API keys:
+      - `ACOUSTID_APP_API_KEY`: Get from [AcoustID Applications](https://acoustid.org/applications)
+      - `MUSIXMATCH_API_KEY`: Get from [Musixmatch Developer Dashboard](https://developer.musixmatch.com/)
+      - Other API keys as needed
     - Run the backend server: `uvicorn app.main:app --reload --port 8000`
 3.  **Set up Frontend:**
     - Navigate to the frontend directory (if structure dictates, otherwise root).

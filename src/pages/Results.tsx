@@ -257,11 +257,11 @@ const Results: React.FC = () => {
 
   // 2. If analysis done, but no results/source track, show "Not Found"
   if (!resultsData || !sourceTrackForDisplay) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow pt-28 pb-16">
-          <div className="container px-4 md:px-6">
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-grow pt-28 pb-16">
+        <div className="container px-4 md:px-6">
             <div className="text-center">
               <h1 className="text-2xl font-bold mb-4">No Results Found</h1>
               <button
@@ -361,7 +361,7 @@ const Results: React.FC = () => {
                              )}
                          </ul>
                      </div>
-                 </div>
+              </div>
                  {/* --- Add Discogs Link under Image (in Image Column) --- */}
                  <div className="w-full sm:w-32 flex-shrink-0 mt-2">
                      {discogs_data?.discogs_id && (
@@ -374,7 +374,7 @@ const Results: React.FC = () => {
                               View on Discogs
                           </a>
                      )}
-                 </div>
+              </div>
               </div>
             </div>
             
@@ -396,7 +396,7 @@ const Results: React.FC = () => {
                             Read more on Wikipedia...
                          </a>
                     </div>
-                </div>
+          </div>
             )}
             
             <div className="mb-8">
@@ -410,9 +410,9 @@ const Results: React.FC = () => {
                     >
                         Search on Wikipedia
                     </a>
-                </div>
-            </div>
-            
+              </div>
+              </div>
+              
             <div className="space-y-4">
               <h2 className="text-2xl font-semibold mb-2">Similar Royalty-Free Tracks (from Jamendo)</h2>
               {/* Display Keywords Used */}
@@ -423,10 +423,10 @@ const Results: React.FC = () => {
                           {analysis.keywords.map((kw, idx) => (
                               <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-mono">{kw}</span>
                           ))}
-                      </div>
-                  </div>
-              )}
-              
+              </div>
+            </div>
+          )}
+          
               {similarTracks.length > 0 ? (
                 similarTracks.map((track) => (
                   <div
@@ -454,8 +454,8 @@ const Results: React.FC = () => {
                                  >
                                    {tag}
                                  </span>
-                               ))}
-                             </div>
+            ))}
+          </div>
                           )}
                           <p className="mt-2 text-xs text-muted-foreground">License: {track.license}</p>
                         </div>

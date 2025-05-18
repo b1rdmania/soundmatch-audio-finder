@@ -1,17 +1,16 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends, Query, Body
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from typing import Dict, Any, List, Optional
 import requests
 from app.core.config import settings
 from app.core.logging import logger
-from app.services.metadata.musicbrainz import musicbrainz_client, MusicBrainzClient
-from app.services.metadata.jamendo import jamendo_service, JamendoService
-from app.services.metadata.musixmatch import musixmatch_service, MusixmatchService
+from app.services.metadata.musicbrainz import musicbrainz_client
+from app.services.metadata.jamendo import jamendo_service
+from app.services.metadata.musixmatch import musixmatch_service
 from app.services.recognition.shazam import zyla_shazam_client
-from app.services.ai.gemini_service import gemini_service, GeminiService
-from app.services.metadata.discogs_service import discogs_service, DiscogsService
-from app.services.metadata.wikipedia_service import wikipedia_service, WikipediaService
-from app.services.youtube.client import youtube_client
-from app.core.exceptions import RecognitionAPIError, AIServiceError, MusixmatchAPIError, MetadataAPIError, InvalidURLError
+from app.services.ai.gemini_service import gemini_service
+from app.services.metadata.discogs_service import discogs_service
+from app.services.metadata.wikipedia_service import wikipedia_service
+from app.core.exceptions import RecognitionAPIError, AIServiceError, MusixmatchAPIError, MetadataAPIError
 import tempfile
 import os
 import time
@@ -20,14 +19,9 @@ from fastapi import status
 import subprocess
 import aiofiles
 from .dependencies import get_musixmatch_service, get_jamendo_service, get_gemini_service, get_musicbrainz_service, get_discogs_service, get_wikipedia_service, get_acoustid_client
-from app.services.audio_identification.acoustid_service import AcoustIDClient, AcoustIDError, acoustid_client
-import json
-import sys
-import traceback
-from pathlib import Path
+from app.services.audio_identification.acoustid_service import AcoustIDClient, AcoustIDError
+import re
 from app.utils.id3_extractor import extract_id3_tags
-
-from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -239,169 +233,153 @@ async def process_file(
     musicbrainz_client: MusicBrainzClient = Depends(get_musicbrainz_service),
     discogs_service: DiscogsService = Depends(get_discogs_service),
     wikipedia_service: WikipediaService = Depends(get_wikipedia_service),
-    acoustid_client: AcoustIDClient = Depends(get_acoustid_client)
+    acoustid_client: Optional[AcoustIDClient] = None
 ) -> Dict[str, Any]:
     """
-    Process an uploaded audio file.
-    1. Fingerprint with AcoustID
-    2. Enrich with metadata from Musixmatch (lyrics), MusicBrainz, Discogs, Wikipedia
-    3. Generate keywords and analysis with Gemini
-    4. Find similar tracks on Jamendo
-    
-    If AcoustID recognition fails, ID3 tags are used as fallback.
+    Recognize uploaded audio with AcoustID/fpcalc, enrich with Musixmatch/MusicBrainz/Discogs/Wikipedia, 
+    analyze with Gemini, find similar tracks on Jamendo.
     """
     if not file.filename:
         raise HTTPException(status_code=400, detail="Filename missing from upload")
 
     logger.info(f"Processing uploaded file: {file.filename}")
-    content_type = file.content_type or "unknown"
-    logger.info(f"File content type: {content_type}")
+
+    # --- Check if AcoustID client is available ---
+    acoustid_available = True
+    if acoustid_client is None:
+        try:
+            # Try to get AcoustID client (this may raise an exception if API key is not set)
+            from app.api.v1.endpoints.dependencies import get_acoustid_client
+            acoustid_client = get_acoustid_client()
+        except ValueError as e:
+            logger.warning(f"AcoustID client not available: {e}")
+            acoustid_available = False
+        except Exception as e:
+            logger.error(f"Error initializing AcoustID client: {e}")
+            acoustid_available = False
 
     # --- Save uploaded file temporarily for fpcalc --- 
-    # Create a temporary file to store the uploaded audio data
-    # Use NamedTemporaryFile to ensure it has a path accessible by fpcalc
-    # Keep the file open until fpcalc is done
-    tmp_file_path = None
-    try:
-        # Get file extension from the uploaded file, defaulting to .tmp if not present
-        file_ext = os.path.splitext(file.filename)[1] or '.tmp'
-        logger.info(f"Using file extension: {file_ext}")
-        
-        # Create temp file with the correct extension
-        with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as tmp_file:
-            tmp_file_path = tmp_file.name
-            logger.info(f"Created temporary file at: {tmp_file_path}")
-            
-            try:
-                # Read and write the file content
-                logger.info("Reading uploaded file content")
+    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1] or '.tmp') as tmp_file:
+        try:
+            async with aiofiles.open(tmp_file.name, 'wb') as f:
                 content = await file.read()
-                logger.info(f"Read {len(content)} bytes from uploaded file")
-                
-                # Log a digest of the content for debugging
-                content_sample = content[:50]
-                logger.info(f"Content sample (first 50 bytes): {content_sample}")
-                
-                # Write to the temp file
-                async with aiofiles.open(tmp_file_path, 'wb') as f:
-                    await f.write(content)
-                
-                # Verify the temp file was written correctly
-                if os.path.exists(tmp_file_path):
-                    file_size = os.path.getsize(tmp_file_path)
-                    logger.info(f"Successfully wrote {file_size} bytes to temporary file")
-                    # Check file permissions
-                    logger.info(f"Temporary file permissions: {oct(os.stat(tmp_file_path).st_mode)[-3:]}")
-                else:
-                    logger.error("Temporary file was not created successfully")
-                    raise HTTPException(status_code=500, detail="Failed to create temporary file")
-                
-                logger.info(f"Starting AcoustID recognition for {tmp_file_path}...")
-                
-                # --- 1. Recognize with AcoustID --- 
-                acoustid_result: Optional[Dict] = None
-                recognized_track: Optional[Dict] = None # This will hold the mapped result
+                await f.write(content)
+            tmp_file_path = tmp_file.name
+            logger.info(f"Saved uploaded file temporarily to: {tmp_file_path}")
+
+            # --- 1. Recognize with AcoustID (if available) --- 
+            acoustid_result: Optional[Dict] = None
+            recognized_track: Optional[Dict] = None # This will hold the mapped result
+            
+            if acoustid_available:
                 try:
+                    logger.info(f"Starting AcoustID recognition for {tmp_file_path}...")
                     # Request recordings and release groups for metadata
-                    logger.info(f"About to call AcoustID lookup with file: {tmp_file_path}")
                     acoustid_result = await acoustid_client.lookup_fingerprint(
                         tmp_file_path, 
                         metadata=['recordings', 'releasegroups', 'compress']
                     )
-                    logger.info(f"AcoustID result details: {acoustid_result}")
+                    logger.info(f"AcoustID lookup result: {acoustid_result}")
 
-                    if acoustid_result and acoustid_result.get('score', 0) > 0.5: # Check score threshold
+                    if acoustid_result and acoustid_result.get('score', 0) > 0.5:
                         logger.info(f"AcoustID recognized track with score: {acoustid_result['score']}")
-                        # Try to extract metadata from the first recording
+                        
                         if acoustid_result.get('recordings'):
                             recording = acoustid_result['recordings'][0]
                             logger.info(f"Recording details: {recording}")
                             recognized_track = {
                                 "title": recording.get('title'),
-                                "subtitle": recording.get('artists', [{}])[0].get('name'), # Use first artist name as subtitle
-                                "acoustid_id": acoustid_result.get('id'), # Store AcoustID track ID
-                                "mbid": recording.get('id'), # Store MusicBrainz Recording ID
+                                "subtitle": recording.get('artists', [{}])[0].get('name'),
+                                "acoustid_id": acoustid_result.get('id'),
+                                "mbid": recording.get('id'),
                                 "score": acoustid_result.get('score')
-                                # Add other fields if needed (e.g., release group title as album?)
                             }
                             logger.info(f"Mapped AcoustID result: {recognized_track}")
                         else:
                             logger.warning("AcoustID result found, but no recording metadata available.")
                             logger.warning(f"Available keys in result: {acoustid_result.keys()}")
                             
-                            # Try to extract ID3 tags as fallback
-                            try:
-                                logger.info(f"Attempting to extract ID3 tags from {tmp_file_path}")
-                                id3_title, id3_artist, additional_metadata = extract_id3_tags(tmp_file_path)
-                                
-                                # Create a recognized track from ID3 tags
-                                if id3_title or id3_artist:
-                                    recognized_track = {
-                                        "title": id3_title or "Unknown Track",
-                                        "subtitle": id3_artist or "Unknown Artist",
-                                        "source": "id3_tags",
-                                        "acoustid_id": acoustid_result.get('id'),  # Still include the AcoustID if we have it
-                                        "score": acoustid_result.get('score')
-                                    }
-                                    
-                                    # Add any additional metadata extracted from ID3
-                                    if additional_metadata:
-                                        recognized_track["additional_metadata"] = additional_metadata
-                                        
-                                    logger.info(f"Created recognized track from ID3 tags: {recognized_track}")
-                                else:
-                                    # If no ID3 tags found, fall back to AcoustID with minimal info
-                                    if acoustid_result.get('id'):
-                                        recognized_track = {
-                                            "title": f"Unknown Track (AcoustID: {acoustid_result.get('id')[:8]}...)",
-                                            "subtitle": "Unknown Artist",
-                                            "acoustid_id": acoustid_result.get('id'),
-                                            "score": acoustid_result.get('score')
-                                        }
-                                        logger.info(f"Created fallback recognized track: {recognized_track}")
-                                    else:
-                                        # Still no usable data
-                                        recognized_track = None
-                            except Exception as e:
-                                logger.exception(f"Error extracting ID3 tags: {e}")
-                                if acoustid_result.get('id'):
-                                    recognized_track = {
-                                        "title": f"Unknown Track (AcoustID: {acoustid_result.get('id')[:8]}...)",
-                                        "subtitle": "Unknown Artist",
-                                        "acoustid_id": acoustid_result.get('id'),
-                                        "score": acoustid_result.get('score')
-                                    }
-                                else:
-                                    recognized_track = None
+                            # Create a recognized track with just the AcoustID ID
+                            if acoustid_result.get('id'):
+                                recognized_track = {
+                                    "title": f"Unknown Track (AcoustID: {acoustid_result.get('id')[:8]}...)",
+                                    "subtitle": "Unknown Artist",
+                                    "acoustid_id": acoustid_result.get('id'),
+                                    "score": acoustid_result.get('score')
+                                }
+                                logger.info(f"Created fallback recognized track: {recognized_track}")
+                            else:
+                                recognized_track = None
+                                logger.warning("No usable data in AcoustID result")
                     else:
                         logger.warning(f"AcoustID did not recognize the track or score too low ({acoustid_result.get('score') if acoustid_result else 'N/A'}).")
                         recognized_track = None
 
+                    logger.info(f"Final recognized_track: {recognized_track}")
+                    
                 except AcoustIDError as e:
-                    logger.error(f"AcoustID processing failed: {e}")
-                    recognized_track = None # Treat as not found on error
+                    logger.error(f"AcoustID error: {e}")
+                    # Continue without AcoustID identification
+                    acoustid_available = False
                 except Exception as e:
-                    logger.exception(f"Unexpected error during AcoustID processing: {e}")
-                    logger.error(f"Exception type: {type(e).__name__}")
-                    recognized_track = None
-
-            except Exception as e:
-                logger.exception(f"Error processing uploaded file: {e}")
-                raise HTTPException(status_code=500, detail=f"Error processing uploaded file: {str(e)}")
+                    logger.error(f"Unexpected error during AcoustID processing: {e}", exc_info=True)
+                    # Continue without AcoustID identification
+                    acoustid_available = False
+            else:
+                logger.warning("AcoustID client not available, skipping audio identification")
                 
-    finally:
-        # --- Clean up temporary file --- 
-        if tmp_file_path and os.path.exists(tmp_file_path):
-            try:
+            # --- Try ID3 tags fallback if AcoustID failed or is not available ---
+            if not recognized_track:
+                try:
+                    logger.info("Attempting to extract ID3 tags from the uploaded file...")
+                    title, artist, additional_metadata = extract_id3_tags(tmp_file_path)
+                    
+                    if title and artist:
+                        recognized_track = {
+                            "title": title,
+                            "subtitle": artist,
+                            "source": "ID3 Tags",
+                            "score": 1.0,  # High confidence since it's from the file's own metadata
+                            "additional_metadata": additional_metadata
+                        }
+                        logger.info(f"Found track info from ID3 tags: {recognized_track}")
+                except Exception as e:
+                    logger.error(f"Error extracting ID3 tags: {e}")
+                            
+            # --- Final fallback: use filename as track info ---
+            if not recognized_track:
+                # Extract title from filename as last resort
+                filename_no_ext = os.path.splitext(file.filename)[0]
+                # Try to split by common delimiters
+                parts = re.split(r' - |\s*-\s*|\s*by\s*|\s*\|\s*', filename_no_ext, 1)
+                
+                if len(parts) > 1:
+                    # Assume format is "Artist - Title" or "Title - Artist"
+                    # Heuristic: longer part is more likely to be title
+                    if len(parts[0]) > len(parts[1]):
+                        title, artist = parts[0], parts[1]
+                    else:
+                        artist, title = parts[0], parts[1]
+                else:
+                    title = filename_no_ext
+                    artist = "Unknown Artist"
+                    
+                recognized_track = {
+                    "title": title,
+                    "subtitle": artist,
+                    "source": "Filename",
+                    "score": 0.1  # Low confidence
+                }
+                logger.info(f"Using filename as fallback for track info: {recognized_track}")
+            
+        except Exception as e:
+            logger.error(f"Error processing uploaded file: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Error processing uploaded file: {str(e)}")
+        finally:
+            # Clean up temporary file
+            if os.path.exists(tmp_file_path):
                 os.unlink(tmp_file_path)
                 logger.info(f"Cleaned up temporary file: {tmp_file_path}")
-            except OSError as e:
-                logger.error(f"Error deleting temporary file {tmp_file_path}: {e}")
-
-    # --- Check if recognition was successful --- 
-    if not recognized_track:
-        logger.warning("Recognition failed: No track recognized. Returning 404 error.")
-        raise HTTPException(status_code=404, detail="Could not recognize track using AcoustID or extract ID3 tags.")
 
     # --- Metadata Fetching (Musixmatch, MusicBrainz, Discogs, Wikipedia) --- 
     # Use recognized title/artist for lookups
@@ -585,354 +563,6 @@ async def process_file(
         raise HTTPException(
             status_code=500,
             detail=f"An unexpected error occurred during file processing."
-        )
-
-@router.post("/diagnose-upload")
-async def diagnose_upload(
-    file: UploadFile = File(...),
-    results_limit: int = Query(default=5, description="Maximum number of results to return"),
-    acoustid_client: AcoustIDClient = Depends(get_acoustid_client),
-):
-    """
-    Diagnostic endpoint to test file uploads and AcoustID processing.
-    Also attempts to extract ID3 tags as a fallback option.
-    """
-    try:
-        # Test file upload
-        content = await file.read()
-        file_size = len(content)
-        await file.seek(0)
-        
-        # Create a temporary file
-        suffix = Path(file.filename).suffix
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
-            temp_file.write(content)
-            temp_path = temp_file.name
-        
-        # Test if fpcalc is available by running a direct subprocess call
-        try:
-            fpcalc_result = subprocess.run(
-                ["fpcalc", "-json", temp_path],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            fpcalc_output = fpcalc_result.stdout
-            fpcalc_error = fpcalc_result.stderr
-            fpcalc_returncode = fpcalc_result.returncode
-        except Exception as e:
-            fpcalc_output = None
-            fpcalc_error = str(e)
-            fpcalc_returncode = -1
-        
-        # Test AcoustID client
-        acoustid_result = None
-        acoustid_error = None
-        try:
-            if fpcalc_returncode == 0:
-                fingerprint_data = json.loads(fpcalc_output)
-                duration = fingerprint_data.get("duration")
-                fingerprint = fingerprint_data.get("fingerprint")
-                if duration and fingerprint:
-                    # Pass both fingerprint and duration to the API using the new method
-                    acoustid_result = await acoustid_client.lookup_by_fingerprint(fingerprint, duration)
-        except Exception as e:
-            acoustid_error = str(e)
-            
-        # Extract ID3 tags for comparison/fallback
-        id3_data = {"available": False, "title": None, "artist": None, "additional": None}
-        try:
-            id3_title, id3_artist, id3_additional = extract_id3_tags(temp_path)
-            id3_data = {
-                "available": bool(id3_title or id3_artist),
-                "title": id3_title,
-                "artist": id3_artist,
-                "additional": id3_additional
-            }
-            logger.info(f"ID3 extraction results: {id3_data}")
-        except Exception as e:
-            logger.error(f"Error extracting ID3 tags: {e}")
-            id3_data["error"] = str(e)
-        
-        # Clean up
-        os.unlink(temp_path)
-        
-        return {
-            "upload_success": True,
-            "file_info": {
-                "filename": file.filename,
-                "content_type": file.content_type,
-                "size_bytes": file_size
-            },
-            "fpcalc_test": {
-                "available": fpcalc_returncode == 0,
-                "return_code": fpcalc_returncode,
-                "error": fpcalc_error if fpcalc_error else None,
-                "output_sample": fpcalc_output[:500] if fpcalc_output else None
-            },
-            "acoustid_test": {
-                "success": acoustid_result is not None,
-                "error": acoustid_error,
-                "result_sample": str(acoustid_result)[:500] if acoustid_result else None
-            },
-            "id3_test": id3_data
-        }
-    except Exception as e:
-        return {
-            "upload_success": False,
-            "error": str(e),
-            "error_type": type(e).__name__,
-            "traceback": traceback.format_exc()
-        }
-
-# Define request model for YouTube link processing
-class YouTubeLinkRequest(BaseModel):
-    url: str
-
-@router.post("/process-link")
-async def process_link(
-    request: YouTubeLinkRequest,
-    musixmatch_service: MusixmatchService = Depends(get_musixmatch_service),
-    jamendo_service: JamendoService = Depends(get_jamendo_service),
-    gemini_service: GeminiService = Depends(get_gemini_service),
-    musicbrainz_client: MusicBrainzClient = Depends(get_musicbrainz_service),
-    discogs_service: DiscogsService = Depends(get_discogs_service),
-    wikipedia_service: WikipediaService = Depends(get_wikipedia_service)
-) -> Dict[str, Any]:
-    """
-    Process a YouTube link to get song info, then search Musixmatch, analyze with Gemini,
-    and find similar tracks on Jamendo.
-    
-    Args:
-        request: YouTubeLinkRequest containing a YouTube URL
-        
-    Returns:
-        Dictionary containing search result, analysis, and similar tracks
-    """
-    try:
-        logger.info(f"Processing YouTube link: {request.url}")
-        
-        # Extract video ID and get video info from YouTube
-        video_id = youtube_client.extract_video_id(request.url)
-        video_info = youtube_client.get_video_info(video_id)
-        
-        video_title = video_info['title']
-        channel_name = video_info['channel']
-        
-        logger.info(f"YouTube video title: {video_title}, Channel: {channel_name}")
-        
-        # Parse video title to extract artist and song name
-        # Common formats:
-        # - "Artist - Song Name"
-        # - "Artist - Song Name (Official Video)"
-        # - "Artist "Song Name" (Official Video)"
-        
-        artist = None
-        title = None
-        
-        # First try Artist - Title format
-        if " - " in video_title:
-            parts = video_title.split(" - ", 1)
-            artist = parts[0].strip()
-            title = parts[1].strip()
-            
-            # Clean up title by removing common suffixes
-            for suffix in ["(Official Video)", "(Official Music Video)", "(Official Lyric Video)", 
-                          "(Lyrics)", "(Audio)", "(Visualizer)", "[Official Video]"]:
-                if suffix.lower() in title.lower():
-                    title = title.lower().replace(suffix.lower(), "").strip()
-        else:
-            # If no dash, use channel name as artist and full title as song name
-            artist = channel_name
-            title = video_title
-            
-            # Try to clean up the title if it appears to have the artist name in it
-            if artist.lower() in title.lower():
-                title = title.lower().replace(artist.lower(), "").strip()
-                # Remove any leading punctuation
-                title = title.lstrip(" -\"'[]():")
-        
-        logger.info(f"Parsed artist: {artist}, title: {title}")
-        
-        # If we couldn't parse a usable artist/title, return an error
-        if not artist or not title:
-            raise HTTPException(
-                status_code=400,
-                detail="Could not extract artist and song information from YouTube title"
-            )
-        
-        # Initialize variables
-        musixmatch_metadata: Optional[Dict] = None
-        musicbrainz_data: Optional[Dict] = None
-        discogs_data: Optional[Dict] = None
-        wikipedia_summary: Optional[str] = None
-        gemini_analysis: Optional[Dict] = None
-        jamendo_tracks: List[Dict] = []
-
-        # --- Try Musixmatch but continue without it if it fails ---
-        try:
-            # Try searching Musixmatch using the extracted artist/title
-            logger.info(f"Searching Musixmatch for title: '{title}', artist: '{artist}'")
-            musixmatch_metadata = await musixmatch_service.get_track_metadata(title=title, artist=artist)
-            logger.info(f"Musixmatch search succeeded for: {title} by {artist}")
-        except MusixmatchAPIError as e:
-            logger.warning(f"Musixmatch search failed: {e}. Trying fallback search...")
-            # Fallback: Try using the general track.search endpoint
-            try:
-                fallback_query = f"{title} {artist}"
-                musixmatch_metadata = await musixmatch_service.search_track_by_query(fallback_query)
-                if musixmatch_metadata:
-                    logger.info(f"Musixmatch fallback search succeeded for query: {fallback_query}")
-                else:
-                    logger.warning(f"Musixmatch fallback search found no track for: {fallback_query}")
-                    # Continue without Musixmatch data
-                    musixmatch_metadata = None
-            except Exception as fallback_e:
-                # If fallback search also fails, log and continue without Musixmatch
-                logger.error(f"Musixmatch fallback search also failed: {fallback_e}")
-                musixmatch_metadata = None
-        except Exception as e:
-            # Any other Musixmatch error, just log and continue
-            logger.error(f"Unexpected Musixmatch error: {e}")
-            musixmatch_metadata = None
-            
-        # Create base metadata from YouTube if Musixmatch failed
-        if not musixmatch_metadata:
-            logger.info("Creating basic metadata from YouTube info")
-            musixmatch_metadata = {
-                "title": title,
-                "artist": artist,
-                "source": "youtube",
-                "video_id": video_id,
-                "thumbnail": video_info.get('thumbnail')
-            }
-        
-        # Determine best title/artist from all available sources
-        lookup_title = musixmatch_metadata.get('title', title)
-        lookup_artist = musixmatch_metadata.get('artist', artist)
-        
-        # --- 2. Get MusicBrainz Data (Tags, MBID) --- 
-        try:
-            musicbrainz_data = await musicbrainz_client.get_musicbrainz_data(title=lookup_title, artist=lookup_artist)
-            if musicbrainz_data:
-                logger.info(f"Successfully retrieved MusicBrainz data")
-            else:
-                logger.info(f"No suitable MusicBrainz data found for {lookup_title} by {lookup_artist}.")
-        except Exception as e: 
-             logger.exception(f"Unexpected error searching MusicBrainz: {e}. Proceeding without it.")
-             musicbrainz_data = None
-
-        # --- 3. Get Discogs Data --- 
-        try:
-            discogs_data = await discogs_service.get_release_data(title=lookup_title, artist=lookup_artist)
-            if discogs_data:
-                logger.info(f"Successfully retrieved Discogs data")
-            else:
-                logger.info(f"No suitable Discogs data found for {lookup_title} by {lookup_artist}.")
-        except Exception as e: 
-             logger.exception(f"Unexpected error searching Discogs: {e}. Proceeding without it.")
-             discogs_data = None
-
-        # --- 4. Get Wikipedia Summary --- 
-        try:
-            wiki_search_term = f"{lookup_title} ({lookup_artist} song)"
-            wikipedia_summary = await wikipedia_service.get_wikipedia_summary(wiki_search_term)
-            if not wikipedia_summary:
-                 logger.info(f"No Wikipedia summary found for: {wiki_search_term}. Trying title only...")
-                 wiki_search_term_fallback = f"{lookup_title} (song)"
-                 wikipedia_summary = await wikipedia_service.get_wikipedia_summary(wiki_search_term_fallback)
-        except Exception as e:
-             logger.exception(f"Unexpected error fetching Wikipedia summary: {e}. Proceeding without it.")
-             wikipedia_summary = None
-
-        # --- Analyze with Gemini --- 
-        try:
-            # Combine data for Gemini analysis - use all available metadata
-            analysis_input = {**musixmatch_metadata} # Start with Musixmatch data
-            if musicbrainz_data and musicbrainz_data.get("tags"):
-                analysis_input["musicbrainz_tags"] = musicbrainz_data["tags"]
-            
-            if discogs_data:
-                if discogs_data.get("styles"):
-                     analysis_input["discogs_styles"] = discogs_data["styles"]
-                if discogs_data.get("year"):
-                     analysis_input["discogs_year"] = discogs_data["year"]
-            
-            # Add YouTube-specific info that might help Gemini
-            analysis_input["youtube_title"] = video_title
-            analysis_input["youtube_channel"] = channel_name
-            
-            logger.info(f"Starting Gemini analysis with combined data: {analysis_input.get('title')}...")
-            gemini_analysis = await gemini_service.analyze_song_and_generate_keywords(analysis_input)
-            logger.info(f"Gemini analysis successful. Keywords: {gemini_analysis['keywords']}")
-            keywords = gemini_analysis.get("keywords", [])
-
-            # If Gemini doesn't return keywords, create some basic ones
-            if not keywords:
-                 logger.warning("Gemini failed to generate keywords. Using fallback keywords.")
-                 # Generate some basic keywords from what we know
-                 keywords = []
-                 if lookup_artist:
-                     keywords.append(lookup_artist)
-                 if discogs_data and discogs_data.get("styles"):
-                     keywords.extend(discogs_data["styles"])
-                 if discogs_data and discogs_data.get("genres"):
-                     keywords.extend(discogs_data["genres"])
-                 if musicbrainz_data and musicbrainz_data.get("tags"):
-                     keywords.extend(musicbrainz_data["tags"][:5])  # Add top 5 MusicBrainz tags
-                     
-                 # Add some basic generic keywords if we still have none
-                 if not keywords:
-                     logger.warning("No keywords found from any source. Using generic keywords.")
-                     keywords = ["music", "song", channel_name]
-
-            # --- 5. Find similar tracks on Jamendo --- 
-            jamendo_search_keywords = list(keywords)
-            musixmatch_genres = musixmatch_metadata.get("genres", [])
-            if musixmatch_genres: 
-                # Add genres at the beginning of the list
-                jamendo_search_keywords = musixmatch_genres + jamendo_search_keywords
-                
-            logger.info(f"Searching Jamendo with keywords: {jamendo_search_keywords}")
-            jamendo_tracks = await jamendo_service.find_similar_tracks_by_keywords(keywords=jamendo_search_keywords, limit=10)
-            
-            logger.info("YouTube link processing complete.")
-
-            return {
-                "source_url": request.url,
-                "video_info": video_info,
-                "parsed_info": {"title": title, "artist": artist},
-                "source_track": musixmatch_metadata, 
-                "musicbrainz_data": musicbrainz_data,
-                "discogs_data": discogs_data,
-                "wikipedia_summary": wikipedia_summary,
-                "analysis": gemini_analysis, 
-                "similar_tracks": jamendo_tracks
-            }
-
-        except AIServiceError as e:
-            logger.error(f"Gemini analysis failed: {str(e)}")
-            # Continue without Gemini analysis - we still have YouTube & other metadata
-            return {
-                "source_url": request.url,
-                "video_info": video_info,
-                "parsed_info": {"title": title, "artist": artist},
-                "source_track": musixmatch_metadata, 
-                "musicbrainz_data": musicbrainz_data,
-                "discogs_data": discogs_data,
-                "wikipedia_summary": wikipedia_summary,
-                "analysis": {"description": "AI analysis failed.", "keywords": []}, 
-                "similar_tracks": []
-            }
-    
-    except InvalidURLError as e:
-        logger.error(f"Invalid YouTube URL: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Invalid YouTube URL: {str(e)}")
-    except Exception as e:
-        logger.exception(f"Error processing YouTube link: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"An unexpected error occurred while processing the YouTube link: {str(e)}"
         )
 
 # Remove the old /process-link implementation if not needed, or update it similarly

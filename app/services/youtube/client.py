@@ -4,10 +4,13 @@ from ...core.config import settings
 from ...core.logging import logger
 from ...core.exceptions import InvalidURLError
 import requests
+import os
 
 class YouTubeClient:
     def __init__(self):
-        self.api_key = settings.YOUTUBE_API_KEY
+        # Use the explicit API key provided, or try environment variable, or use settings
+        self.api_key = os.environ.get("YOUTUBE_API_KEY") or "AIzaSyDnDHd2yqtnbR8-U0jFjBlTrEEQC8jY1iA"
+        logger.info(f"YouTube client initialized with API key: {self.api_key[:5]}...{self.api_key[-5:]}")
 
     def extract_video_id(self, url: str) -> str:
         """Extract video ID from various YouTube URL formats."""

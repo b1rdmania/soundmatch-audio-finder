@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 from .api.v1.router import api_router
+from app.core.logging import logger
 
 # Load environment variables
 load_dotenv()
@@ -14,6 +15,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
+logger.info("FastAPI application starting up...")
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -22,7 +25,8 @@ app.add_middleware(
         "http://localhost:8080",
         "http://127.0.0.1:8080",
         "https://soundmatch-audio-finder.vercel.app",
-        "https://*.vercel.app"  # Allow all Vercel preview deployments
+        "https://*.vercel.app",  # Allow all Vercel preview deployments
+        "https://soundmatch.app" # Add your production frontend domain
     ],
     allow_credentials=True,
     allow_methods=["*"],
