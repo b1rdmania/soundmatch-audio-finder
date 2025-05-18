@@ -3,6 +3,7 @@ import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ContactForm from '@/components/ContactForm';
+import { Separator } from '@/components/ui/separator';
 
 const About = () => {
   const faqs = [
@@ -31,21 +32,30 @@ const About = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow pt-28 pb-16">
+      <main className="flex-grow pt-28 pb-16 bg-gradient-to-b from-secondary/30 to-background">
         <div className="container px-4 md:px-6">
+          <div className="mb-8 animate-slide-up max-w-3xl mx-auto">
+            <h1 className="text-3xl font-bold tracking-tight mb-3 text-center">About SoundMatch AI</h1>
+            <p className="text-lg text-muted-foreground mb-6 text-center">
+              Finding copyright-free alternatives to your favorite music
+            </p>
+            <Separator className="my-6" />
+          </div>
+          
           <section className="max-w-3xl mx-auto mb-16 animate-slide-up">
-            <h1 className="text-3xl font-bold tracking-tight mb-6 text-center">About SoundMatch AI</h1>
-            <p className="text-lg text-muted-foreground mb-6">
-              SoundMatch AI is an innovative platform that helps creators find copyright-free music that sounds similar to their favorite tracks. Our powerful AI analyzes the audio characteristics of your reference song and searches through extensive libraries of free-to-use music to find the closest matches.
-            </p>
-            <p className="text-lg text-muted-foreground">
-              Whether you're a content creator, streamer, marketer, or game developer, our technology helps you find the perfect soundtrack for your projects while avoiding copyright issues. No more worrying about DMCA strikes or licensing fees – just great music that matches your creative vision.
-            </p>
+            <div className="bg-card rounded-xl border shadow-sm p-6">
+              <p className="text-lg text-muted-foreground mb-6">
+                SoundMatch AI is an innovative platform that helps creators find copyright-free music that sounds similar to their favorite tracks. Our powerful AI analyzes the audio characteristics of your reference song and searches through extensive libraries of free-to-use music to find the closest matches.
+              </p>
+              <p className="text-lg text-muted-foreground">
+                Whether you're a content creator, streamer, marketer, or game developer, our technology helps you find the perfect soundtrack for your projects while avoiding copyright issues. No more worrying about DMCA strikes or licensing fees – just great music that matches your creative vision.
+              </p>
+            </div>
           </section>
           
           <section className="max-w-3xl mx-auto mb-16">
             <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">How It Works</h2>
-            <div className="bg-white rounded-xl border p-6 shadow-sm">
+            <div className="bg-card rounded-xl border shadow-sm p-6">
               <p className="text-lg mb-6">
                 SoundMatch AI uses advanced audio processing technologies to find similar music:
               </p>
@@ -86,7 +96,7 @@ const About = () => {
             <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">Frequently Asked Questions</h2>
             <div className="space-y-4">
               {faqs.map((faq, index) => (
-                <div key={index} className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                <div key={index} className="bg-card rounded-xl border shadow-sm overflow-hidden">
                   <details className="group">
                     <summary className="flex justify-between items-center p-6 cursor-pointer list-none">
                       <h3 className="font-medium text-lg">{faq.question}</h3>
@@ -118,7 +128,7 @@ const About = () => {
           
           <section className="max-w-2xl mx-auto">
             <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">Contact Us</h2>
-            <div className="bg-white rounded-xl border shadow-sm p-6">
+            <div className="bg-card rounded-xl border shadow-sm p-6">
               <p className="text-muted-foreground mb-6 text-center">
                 Have questions or feedback? We'd love to hear from you!
               </p>
