@@ -2,8 +2,8 @@
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import ContactForm from '@/components/ContactForm';
 import { Separator } from '@/components/ui/separator';
+import { Mail } from 'lucide-react';
 
 const About = () => {
   const faqs = [
@@ -129,10 +129,18 @@ const About = () => {
           <section className="max-w-2xl mx-auto">
             <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">Get In Touch</h2>
             <div className="bg-card rounded-xl border shadow-sm p-6">
-              <p className="text-muted-foreground mb-6 text-center">
-                Have questions, feedback, or need assistance with SoundMatch AI? We'd love to hear from you!
-              </p>
-              <ContactForm />
+              <div className="text-center py-6">
+                <p className="text-lg text-muted-foreground mb-6">
+                  Have questions, feedback, or need assistance with SoundMatch AI? We'd love to hear from you!
+                </p>
+                <a 
+                  href="mailto:hello@soundmatch.app" 
+                  className="inline-flex items-center text-primary text-xl font-medium hover:underline"
+                >
+                  <Mail className="mr-2 h-6 w-6" />
+                  hello@soundmatch.app
+                </a>
+              </div>
             </div>
           </section>
         </div>
