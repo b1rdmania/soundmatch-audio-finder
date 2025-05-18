@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 const OverviewSection = () => {
   return (
     <section className="mb-10 space-y-4">
-      <Alert variant="warning" className="mb-6 border-yellow-400 bg-yellow-50">
+      <Alert variant="default" className="mb-6 border-yellow-400 bg-yellow-50">
         <AlertTriangle className="h-5 w-5 text-yellow-600" />
         <AlertDescription className="text-yellow-700 font-medium">
           This is sample content for demonstration purposes only. This is not a live investment opportunity.
