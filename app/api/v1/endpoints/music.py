@@ -233,7 +233,7 @@ async def process_file(
     musicbrainz_client: MusicBrainzClient = Depends(get_musicbrainz_service),
     discogs_service: DiscogsService = Depends(get_discogs_service),
     wikipedia_service: WikipediaService = Depends(get_wikipedia_service),
-    acoustid_client: Optional[AcoustIDClient] = None
+    acoustid_client: Optional[AcoustIDClient] = Depends(get_acoustid_client)
 ) -> Dict[str, Any]:
     """
     Recognize uploaded audio with AcoustID/fpcalc, enrich with Musixmatch/MusicBrainz/Discogs/Wikipedia, 
@@ -244,19 +244,9 @@ async def process_file(
 
     logger.info(f"Processing uploaded file: {file.filename}")
 
-    # --- Check if AcoustID client is available ---
-    acoustid_available = True
-    if acoustid_client is None:
-        try:
-            # Try to get AcoustID client (this may raise an exception if API key is not set)
-            from app.api.v1.endpoints.dependencies import get_acoustid_client
-            acoustid_client = get_acoustid_client()
-        except ValueError as e:
-            logger.warning(f"AcoustID client not available: {e}")
-            acoustid_available = False
-        except Exception as e:
-            logger.error(f"Error initializing AcoustID client: {e}")
-            acoustid_available = False
+    # AcoustID client is now injected by Depends, so it's either an instance or None.
+    # The manual fetching block below is removed.
+    # We'll determine acoustid_available based on the injected client.
 
     # --- Save uploaded file temporarily for fpcalc --- 
     with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1] or '.tmp') as tmp_file:
@@ -271,15 +261,22 @@ async def process_file(
             acoustid_result: Optional[Dict] = None
             recognized_track: Optional[Dict] = None # This will hold the mapped result
             
+            acoustid_available = acoustid_client is not None # Determine availability from injected client
+
             if acoustid_available:
                 try:
                     logger.info(f"Starting AcoustID recognition for {tmp_file_path}...")
                     # Request recordings and release groups for metadata
-                    acoustid_result = await acoustid_client.lookup_fingerprint(
-                        tmp_file_path, 
-                        metadata=['recordings', 'releasegroups', 'compress']
-                    )
-                    logger.info(f"AcoustID lookup result: {acoustid_result}")
+                    # Ensure acoustid_client is not None before calling its method
+                    if acoustid_client: # Explicit check for type safety, though acoustid_available implies this
+                        acoustid_result = await acoustid_client.lookup_fingerprint(
+                            tmp_file_path, 
+                            metadata=['recordings', 'releasegroups', 'compress']
+                        )
+                        logger.info(f"AcoustID lookup result: {acoustid_result}")
+                    else: # Should not happen if acoustid_available is true, but defensive
+                        logger.error("AcoustID client was expected but is None inside acoustid_available block.")
+                        acoustid_available = False # Correct the flag
 
                     if acoustid_result and acoustid_result.get('score', 0) > 0.5:
                         logger.info(f"AcoustID recognized track with score: {acoustid_result['score']}")
