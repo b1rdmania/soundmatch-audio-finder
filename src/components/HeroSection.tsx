@@ -27,7 +27,7 @@ const HeroSection = () => {
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-balance">
-            Upload a song, paste a Spotify or YouTube link, and our AI will find similar copyright-free tracks for your projects.
+            Upload a song, paste a YouTube link, and our AI will find similar copyright-free tracks for your projects.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
