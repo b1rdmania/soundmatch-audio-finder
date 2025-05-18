@@ -1,7 +1,10 @@
 
 import React, { useState } from 'react';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, Mail, Phone } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 const ContactForm = () => {
   const [name, setName] = useState('');
@@ -49,67 +52,83 @@ const ContactForm = () => {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-1">
-        <label htmlFor="name" className="block text-sm font-medium">
-          Name
-        </label>
-        <input
-          id="name"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-          placeholder="Your name"
-        />
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <label htmlFor="name" className="block text-sm font-medium">
+            Name
+          </label>
+          <Input
+            id="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full"
+            placeholder="Your name"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <label htmlFor="email" className="block text-sm font-medium">
+            Email
+          </label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full"
+            placeholder="your.email@example.com"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <label htmlFor="message" className="block text-sm font-medium">
+            Message
+          </label>
+          <Textarea
+            id="message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={5}
+            className="w-full resize-none"
+            placeholder="Your message..."
+          />
+        </div>
+        
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="w-full"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Sending...
+            </>
+          ) : (
+            <>
+              <Send className="mr-2 h-5 w-5" />
+              Send Message
+            </>
+          )}
+        </Button>
+      </form>
+
+      <div className="pt-6 border-t border-border">
+        <h3 className="text-lg font-medium mb-4">Contact Us Directly</h3>
+        <div className="space-y-3">
+          <a href="mailto:contact@soundmatch.ai" className="flex items-center text-primary hover:underline">
+            <Mail className="mr-2 h-5 w-5" />
+            contact@soundmatch.ai
+          </a>
+          <a href="tel:+15551234567" className="flex items-center text-primary hover:underline">
+            <Phone className="mr-2 h-5 w-5" />
+            +1 (555) 123-4567
+          </a>
+        </div>
       </div>
-      
-      <div className="space-y-1">
-        <label htmlFor="email" className="block text-sm font-medium">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-          placeholder="your.email@example.com"
-        />
-      </div>
-      
-      <div className="space-y-1">
-        <label htmlFor="message" className="block text-sm font-medium">
-          Message
-        </label>
-        <textarea
-          id="message"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          rows={5}
-          className="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
-          placeholder="Your message..."
-        />
-      </div>
-      
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full py-3 px-4 rounded-lg bg-primary text-primary-foreground font-medium flex items-center justify-center transition-all duration-300 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-70"
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            Sending...
-          </>
-        ) : (
-          <>
-            <Send className="mr-2 h-5 w-5" />
-            Send Message
-          </>
-        )}
-      </button>
-    </form>
+    </div>
   );
 };
 

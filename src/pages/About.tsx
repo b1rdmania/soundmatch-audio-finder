@@ -127,10 +127,10 @@ const About = () => {
           </section>
           
           <section className="max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">Contact Us</h2>
+            <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">Get In Touch</h2>
             <div className="bg-card rounded-xl border shadow-sm p-6">
               <p className="text-muted-foreground mb-6 text-center">
-                Have questions or feedback? We'd love to hear from you!
+                Have questions, feedback, or need assistance with SoundMatch AI? We'd love to hear from you!
               </p>
               <ContactForm />
             </div>
